@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
@@ -22,22 +25,47 @@ namespace NavigationViewItemsTest
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
+        public ObservableCollection<Category> Categories { get; set; }
         public MainPage()
         {
             this.InitializeComponent();
-            Categories = new ObservableCollection<CategoryBase>();
-            Categories.Add(new Category { Name = "Category 1", Glyph = Symbol.Home, Tooltip = "This is category 1", IsEnabled = false });
+            Categories = new ObservableCollection<Category>();
+            Categories.Add(new Category { Name = "Category 1", Glyph = Symbol.Home, Tooltip = "This is category 1", IsEnabled = true, MessgeCount = 10 });
             Categories.Add(new Category { Name = "Category 2", Glyph = Symbol.Keyboard, Tooltip = "This is category 2", IsEnabled = true });
-            Categories.Add(new Category { Name = "Category 3", Glyph = Symbol.Library, Tooltip = "This is category 3" , IsEnabled = false });
+            Categories.Add(new Category { Name = "Category 3", Glyph = Symbol.Library, Tooltip = "This is category 3", IsEnabled = true });
             Categories.Add(new Category { Name = "Category 4", Glyph = Symbol.Mail, Tooltip = "This is category 4", IsEnabled = true });
+
+        }
+        public IEnumerable<NavigationViewItemBase> NavItems
+        {
+            get
+            {
+                return Categories.Select(
+                       b => (new NavigationViewItem
+                       {
+                           Content = b.Name,
+                           Icon = new SymbolIcon(b.Glyph),
+                           IsEnabled = b.IsEnabled,
+                       })
+                );
+            }
         }
 
-        public ObservableCollection<CategoryBase> Categories { get;  set; }
+        public void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            if (PropertyChanged != null)
+            {
+                this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+
+
     }
-
-
     public class CategoryBase { }
 
     public class Category : CategoryBase
@@ -46,6 +74,7 @@ namespace NavigationViewItemsTest
         public string Tooltip { get; set; }
         public Symbol Glyph { get; set; }
         public bool IsEnabled { get; set; }
+        public int MessgeCount { get; set; }
     }
 
     public class Separator : CategoryBase { }
@@ -72,6 +101,26 @@ namespace NavigationViewItemsTest
             @"<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>
                     <NavigationViewItemSeparator />
                   </DataTemplate>");
+    }
+
+    public class VisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if ((int)value == 0)
+            {
+                return Visibility.Collapsed;
+            }
+            else
+            {
+                return Visibility.Visible;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
